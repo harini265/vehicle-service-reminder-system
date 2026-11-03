@@ -1,0 +1,34 @@
+---
+- name: Configure Roadwise application host
+  hosts: roadwise
+  become: true
+  vars:
+    app_dir: /opt/roadwise
+    app_image: "{{ lookup('env', 'APP_IMAGE') | default('your-dockerhub-user/roadwise:latest', true) }}"
+  tasks:
+    - name: Install Docker engine and Compose plugin
+      ansible.builtin.apt:
+        name: [docker.io, docker-compose-v2]
+        state: present
+        update_cache: true
+    - name: Enable Docker
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+    - name: Create app data directory
+      ansible.builtin.file:
+        path: "{{ app_dir }}/data"
+        state: directory
+        owner: root
+        mode: "0755"
+    - name: Deploy Compose manifest
+      ansible.builtin.template:
+        src: templates/docker-compose.yml.j2
+        dest: "{{ app_dir }}/docker-compose.yml"
+        mode: "0644"
+    - name: Pull and start Roadwise
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_dir }}"
+        pull: always
+        state: present

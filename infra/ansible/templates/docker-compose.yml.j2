@@ -1,0 +1,6 @@
+services:
+  web:
+    image: {{ '${IMAGE:-' ~ app_image ~ '}' }}
+    restart: unless-stopped
+    ports: ["5000:5000"]
+    volumes: ["{{ app_dir }}/data:/data"]

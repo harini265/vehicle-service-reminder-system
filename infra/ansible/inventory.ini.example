@@ -1,0 +1,2 @@
+[roadwise]
+roadwise_server ansible_host=YOUR_EC2_PUBLIC_IP ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/your-aws-key.pem

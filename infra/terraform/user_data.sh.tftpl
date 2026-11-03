@@ -1,0 +1,15 @@
+#!/bin/bash
+set -euxo pipefail
+apt-get update
+apt-get install -y docker.io docker-compose-v2
+systemctl enable --now docker
+mkdir -p /opt/roadwise/data
+cat >/opt/roadwise/docker-compose.yml <<'EOF'
+services:
+  web:
+    image: $${IMAGE:-${image}}
+    restart: unless-stopped
+    ports: ["5000:5000"]
+    volumes: ["/opt/roadwise/data:/data"]
+EOF
+docker compose -f /opt/roadwise/docker-compose.yml up -d

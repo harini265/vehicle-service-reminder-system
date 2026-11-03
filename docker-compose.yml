@@ -1,0 +1,47 @@
+services:
+  web:
+    build: .
+    image: ${IMAGE:-roadwise:local}
+    container_name: roadwise-web
+    restart: unless-stopped
+    ports: ["5000:5000"]
+    volumes: ["roadwise-data:/data"]
+    environment:
+      LOAD_DEMO_DATA: "true"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health')"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks: [roadwise]
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: roadwise-prometheus
+    restart: unless-stopped
+    ports: ["9090:9090"]
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks: [roadwise]
+    depends_on: [web]
+  grafana:
+    image: grafana/grafana:11.3.1
+    container_name: roadwise-grafana
+    restart: unless-stopped
+    ports: ["3000:3000"]
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-roadwise-local}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks: [roadwise]
+    depends_on: [prometheus]
+networks:
+  roadwise:
+volumes:
+  roadwise-data:
+  prometheus-data:
+  grafana-data:
